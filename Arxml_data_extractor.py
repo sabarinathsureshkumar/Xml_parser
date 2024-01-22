@@ -25,17 +25,23 @@ def browse_folderpath():
     logging.debug('Output folder Path: %s', lib_Widgets.main_window.folderpath)
 
 
-def generate():
+def generate(*argv):
+    current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+    str_current_datetime = str(current_datetime)
     try:
-        parser = lib_xml_Parser.ParseClass(lib_Widgets.main_window.filepath)
+        if len(argv) == 0:
+            filepath = lib_Widgets.main_window.filepath
+            out_excel = lib_Widgets.main_window.folderpath + '\ARXML_Extract' + str_current_datetime + '.xlsx'
+        else:
+            filepath = str(argv[0])
+            out_excel = str(argv[1]) + 'ARXML_Extract' + str_current_datetime + '.xlsx'
+            lib_Widgets.main_window.withdraw()
+        parser = lib_xml_Parser.ParseClass(filepath)
         cont_data, subcont_data = parser.extract_cont()
         logging.info('Container Data:%s', cont_data)
         logging.info('Sub-Container Data:%s', subcont_data)
         df1 = pd.DataFrame(cont_data, columns=["Containers_SubContainers - ShortName", "Definition-Ref"])
         df2 = pd.DataFrame(subcont_data, columns=["Containers_SubContainers - ShortName", "Definition-Ref"])
-        current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-        str_current_datetime = str(current_datetime)
-        out_excel = lib_Widgets.main_window.folderpath + '\ARXML_Extract' + str_current_datetime+'.xlsx'
         writer = pd.ExcelWriter(out_excel, engine='openpyxl')
         df1.to_excel(writer, sheet_name='Container_Data', index=False)
         df2.to_excel(writer, sheet_name='SubContainer_Data', index=False)
@@ -54,20 +60,7 @@ def close_window():
 
 if __name__ == '__main__':
     try:
-        parser = lib_xml_Parser.ParseClass(sys.argv[1])
-        cont_data, subcont_data = parser.extract_cont()
-        logging.info('Container Data:%s', cont_data)
-        logging.info('Sub-Container Data:%s', subcont_data)
-        df1 = pd.DataFrame(cont_data, columns=["Containers_SubContainers - ShortName", "Definition-Ref"])
-        df2 = pd.DataFrame(subcont_data, columns=["Containers_SubContainers - ShortName", "Definition-Ref"])
-        current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-        str_current_datetime = str(current_datetime)
-        out_excel = sys.argv[2] + '\ARXML_Extract' + str_current_datetime + '.xlsx'
-        writer = pd.ExcelWriter(out_excel, engine='openpyxl')
-        df1.to_excel(writer, sheet_name='first_sheet', index=False)
-        df2.to_excel(writer, sheet_name='second_sheet', index=False)
-        writer.close()
-
+        generate(sys.argv[1], sys.argv[2])
     except:
         obj = lib_Widgets.CreateWidget\
             (widget_type='MainWindow', title='Autosar xml Parser', iconimg='tool_icon.bmp',
@@ -87,5 +80,4 @@ if __name__ == '__main__':
         act_button3 = generate_button.create_button()
         exit_button = lib_Widgets.CreateButtons(text='  Exit  ', command=close_window, row=400, column=70)
         act_button4 = exit_button.create_button()
-
         lib_Widgets.main_window.mainloop()
